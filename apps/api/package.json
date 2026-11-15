@@ -19,12 +19,14 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "@t77/db": "workspace:*",
     "@t77/security-core": "workspace:*",
     "@t77/shared": "workspace:*",
     "dotenv": "^18.0.10",
     "express": "^5.3.0",
+    "ioredis": "6.0.0",
     "pg": "8.23.1",
     "pino": "^10.4.0",
     "zod": "^4.6.7"
