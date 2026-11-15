@@ -11,6 +11,6 @@ export default defineConfig({
   sourcemap: true,
   minify: false,
   splitting: false,
-  bundle: true,
-  noExternal: [/^@t77\//, 'pg', 'pg-native'],
+  noExternal: [/^@t77\//],
+  external: ['pg', 'pg-native'],
 });
