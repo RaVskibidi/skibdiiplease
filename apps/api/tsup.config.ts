@@ -1,3 +1,4 @@
+
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
@@ -10,5 +11,6 @@ export default defineConfig({
   sourcemap: true,
   minify: false,
   splitting: false,
-  noExternal: [/^@t77\//],
+  bundle: true,
+  noExternal: [/^@t77\//, 'pg', 'pg-native'],
 });
