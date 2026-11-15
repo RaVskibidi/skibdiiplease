@@ -1,0 +1,107 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-void: #08090b;
+  --color-panel: #111318;
+  --color-panel-2: #16181e;
+  --color-edge: #24272f;
+  --color-edge-strong: #333742;
+  --color-ash: #9aa0ab;
+  --color-chalk: #eef0f4;
+  --color-blood: #e11d2e;
+  --color-blood-soft: #ff4554;
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(900px 500px at 88% -12%, rgba(225, 29, 46, 0.16), transparent 62%),
+    radial-gradient(700px 420px at -10% 0%, rgba(225, 29, 46, 0.07), transparent 58%), #08090b;
+  color: var(--color-chalk);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(225, 29, 46, 0.35);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-blood-soft);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.t77-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.t77-scroll {
+  scrollbar-color: #333742 transparent;
+  scrollbar-width: thin;
+}
+
+.t77-table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa0ab;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-edge);
+  white-space: nowrap;
+}
+
+.t77-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(36, 39, 47, 0.7);
+  font-size: 13px;
+  vertical-align: top;
+}
+
+.t77-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.t77-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #16181e 0%, #1f232b 45%, #16181e 100%);
+  background-size: 220% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "t77-website",
+  "version": "0.1.0",
+  "private": true,
+  "description": "T77 dashboard website: React UI and Discord OAuth API",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=24.0.0 <27"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter @t77/api --filter @t77/web dev",
+    "dev:api": "pnpm --filter @t77/api dev",
+    "dev:web": "pnpm --filter @t77/web dev",
+    "build": "pnpm --filter @t77/db generate && pnpm -r --concurrency=1 --if-present build",
+    "start": "pnpm --filter @t77/api start",
+    "start:api": "pnpm --filter @t77/api start",
+    "db:generate": "pnpm --filter @t77/db generate",
+    "db:migrate": "pnpm --filter @t77/db migrate:deploy",
+    "db:status": "pnpm --filter @t77/db migrate:status",
+    "db:studio": "pnpm --filter @t77/db studio",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.72.2"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "@t77/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "T77 dashboard API: Discord OAuth2, sessions, REST, and SSE",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "predev": "pnpm --filter @t77/db generate",
+    "prebuild": "pnpm --filter @t77/db generate",
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@t77/db": "workspace:*",
+    "@t77/security-core": "workspace:*",
+    "@t77/shared": "workspace:*",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
+    "@types/supertest": "^6.0.3",
+    "@vitest/coverage-v8": "^5.1.0",
+    "pino-pretty": "^13.2.0",
+    "supertest": "^7.2.2",
+    "tsup": "^9.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "@t77/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "T77 Prisma schema, migrations, tenant repositories, cache, and audit trail",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
+    }
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:status": "prisma migrate status",
+    "migrate:reset": "prisma migrate reset --force",
+    "studio": "prisma studio",
+    "format": "prisma format",
+    "pretypecheck": "prisma generate",
+    "typecheck": "tsc --noEmit",
+    "pretest": "prisma generate",
+    "test": "vitest run --exclude \"test/integration/**\"",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "vitest run test/integration",
+    "test:coverage": "vitest run --exclude \"test/integration/**\" --coverage"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "@t77/shared": "workspace:*",
+    "dotenv": "^18.0.10",
+    "ioredis": "^6.0.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@t77/security-core": "workspace:*",
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "@vitest/coverage-v8": "^5.1.0",
+    "pg": "^8.23.1",
+    "prisma": "7.10.1",
+    "typescript": "5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

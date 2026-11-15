@@ -1,0 +1,863 @@
+// T77 — data model for all security, moderation, verification, backup, and
+// dashboard modules. Every tenant-owned model carries `guildId`, and every
+// tenant query is built by the repository layer with that scope attached.
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  runtime                = "nodejs"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+enum AutomationMode {
+  OBSERVE
+  ENFORCE_REVERSIBLE
+  ENFORCE_DESTRUCTIVE
+}
+
+enum ResourceType {
+  CHANNEL
+  CATEGORY
+  ROLE
+  EMOJI
+  STICKER
+}
+
+enum AntiNukeAction {
+  MEMBER_BAN
+  MEMBER_KICK
+  MEMBER_PRUNE
+  MEMBER_ROLE_UPDATE
+  CHANNEL_CREATE
+  CHANNEL_DELETE
+  CHANNEL_UPDATE
+  CHANNEL_PERMISSION_UPDATE
+  ROLE_CREATE
+  ROLE_DELETE
+  ROLE_UPDATE
+  ROLE_PERMISSION_UPDATE
+  ADMINISTRATOR_GRANT
+  DANGEROUS_ROLE_ASSIGN
+  MASS_ROLE_ASSIGN
+  BOT_ADD
+  WEBHOOK_CREATE
+  WEBHOOK_UPDATE
+  WEBHOOK_DELETE
+  GUILD_UPDATE
+  VANITY_URL_UPDATE
+  INVITE_DELETE
+  EMOJI_UPDATE
+  STICKER_UPDATE
+  INTEGRATION_CREATE
+  INTEGRATION_UPDATE
+  INTEGRATION_DELETE
+}
+
+enum PunishmentType {
+  ALERT
+  QUARANTINE
+  ROLE_REMOVAL
+  TIMEOUT
+  KICK
+  BAN
+}
+
+enum PunishmentStatus {
+  PROPOSED
+  SKIPPED
+  APPLIED
+  FAILED
+  REVERSED
+}
+
+enum WhitelistTargetType {
+  USER
+  ROLE
+  CHANNEL
+}
+
+enum WhitelistScope {
+  GLOBAL
+  ACTION
+}
+
+enum GrantSubjectType {
+  USER
+  ROLE
+}
+
+enum IncidentType {
+  NUKING
+  MASS_JOIN
+  RAID
+  BEAST_MODE
+  SPAM
+  AUTOMOD
+  VERIFICATION_ABUSE
+  SUSPICIOUS_BOT
+  DANGEROUS_PERMISSION
+  MANUAL
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  OPEN
+  MONITORING
+  RESOLVED
+  DISMISSED
+}
+
+enum SecurityEventSource {
+  AUDIT_LOG
+  GATEWAY
+  MESSAGE
+  COMMAND
+  DASHBOARD
+  SYSTEM
+}
+
+enum ModerationCaseType {
+  BAN
+  KICK
+  TIMEOUT
+  UNTIMEOUT
+  WARN
+  UNWARN
+  UNBAN
+  PURGE
+  LOCK
+  UNLOCK
+  SLOWMODE
+  SOFTBAN
+}
+
+enum ModerationCaseStatus {
+  OPEN
+  CLOSED
+  REVERSED
+}
+
+enum VerificationMode {
+  BUTTON
+  CAPTCHA
+}
+
+enum VerificationChallengeStatus {
+  PENDING
+  PASSED
+  FAILED
+  EXPIRED
+  INVALIDATED
+}
+
+enum LogCategory {
+  SECURITY
+  ANTI_NUKE
+  ANTI_RAID
+  MODERATION
+  MEMBER
+  ROLE
+  CHANNEL
+  VERIFICATION
+  BOT
+  BACKUP
+}
+
+enum BackupType {
+  MANUAL
+  SCHEDULED
+  PRE_RESTORE
+}
+
+enum BackupStatus {
+  PENDING
+  CAPTURING
+  READY
+  FAILED
+  DELETED
+}
+
+enum RestoreStatus {
+  PENDING
+  PREVIEWED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum AuditActorType {
+  USER
+  BOT
+  SYSTEM
+}
+
+enum CriticalApprovalStatus {
+  PENDING
+  CONSUMED
+  EXPIRED
+  REVOKED
+}
+
+// ── Tenant root ──────────────────────────────────────────────────────────────
+
+model Guild {
+  id           String    @id
+  name         String
+  ownerId      String
+  iconUrl      String?
+  memberCount  Int       @default(0)
+  caseSequence Int       @default(0)
+  botJoinedAt  DateTime  @default(now())
+  botLeftAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  config                 GuildConfig?
+  resources              GuildResource[]
+  antiNukeRules          AntiNukeRule[]
+  antiRaidConfig         AntiRaidConfig?
+  beastModeState         BeastModeState?
+  automodConfig          AutomodConfig?
+  verificationConfig     VerificationConfig?
+  logChannels            LogChannel[]
+  whitelistEntries       WhitelistEntry[]
+  accessGrants           AccessGrant[]
+  botApprovals           BotApproval[]
+  moderationCases        ModerationCase[]
+  warnings               Warning[]
+  securityIncidents      SecurityIncident[]
+  securityEvents         SecurityEvent[]
+  punishments            Punishment[]
+  quarantineEntries      QuarantineEntry[]
+  auditEntries           AuditEntry[]
+  criticalApprovals      CriticalApproval[]
+  backups                Backup[]
+  restoreJobs            RestoreJob[]
+  verificationChallenges VerificationChallenge[]
+  dashboardActions       DashboardAction[]
+
+  @@index([botLeftAt])
+  @@map("guilds")
+}
+
+model GuildConfig {
+  guildId                  String         @id
+  locale                   String         @default("en")
+  timezone                 String         @default("UTC")
+  automationMode           AutomationMode @default(OBSERVE)
+  enforcementApprovedAt    DateTime?
+  enforcementApprovedBy    String?
+  enforcementPolicyVersion String?
+  antiNukeEnabled          Boolean        @default(true)
+  antiRaidEnabled          Boolean        @default(true)
+  beastModeEnabled         Boolean        @default(true)
+  automodEnabled           Boolean        @default(false)
+  verificationEnabled      Boolean        @default(false)
+  botProtectionEnabled     Boolean        @default(true)
+  loggingEnabled           Boolean        @default(true)
+  backupsEnabled           Boolean        @default(false)
+  backupIntervalHours      Int            @default(24)
+  backupRetentionDays      Int            @default(30)
+  lastScheduledBackupAt    DateTime?
+  version                  Int            @default(1)
+  updatedBy                String?
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@map("guild_configs")
+}
+
+model GuildResource {
+  id        String       @id @default(cuid())
+  guildId   String
+  type      ResourceType
+  discordId String
+  name      String
+  position  Int          @default(0)
+  parentId  String?
+  metadata  Json?
+  syncedAt  DateTime     @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, type, discordId])
+  @@index([guildId, type, position])
+  @@map("guild_resources")
+}
+
+// ── Security configuration ───────────────────────────────────────────────────
+
+model AntiNukeRule {
+  id                          String         @id @default(cuid())
+  guildId                     String
+  action                      AntiNukeAction
+  enabled                     Boolean        @default(true)
+  threshold                   Int            @default(5)
+  windowSeconds               Int            @default(600)
+  containment                 PunishmentType @default(ALERT)
+  requiresDestructiveApproval Boolean        @default(true)
+  cooldownSeconds             Int            @default(300)
+  updatedBy                   String?
+  createdAt                   DateTime       @default(now())
+  updatedAt                   DateTime       @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, action])
+  @@index([guildId, enabled])
+  @@map("anti_nuke_rules")
+}
+
+model AntiRaidConfig {
+  guildId               String   @id
+  enabled               Boolean  @default(true)
+  joinWindowSeconds     Int      @default(60)
+  aggregateThreshold    Int      @default(10)
+  minimumSignals        Int      @default(2)
+  minimumAccountAgeDays Int      @default(7)
+  riskThreshold         Int      @default(60)
+  quarantineRoleId      String?
+  quarantineEnabled     Boolean  @default(true)
+  lockdownEnabled       Boolean  @default(false)
+  autoBanEnabled        Boolean  @default(false)
+  verificationRequired  Boolean  @default(true)
+  bypassBadges          String[] @default([])
+  velocityWeight        Int      @default(30)
+  accountAgeWeight      Int      @default(25)
+  avatarWeight          Int      @default(15)
+  similarAgeWeight      Int      @default(20)
+  suspiciousNameWeight  Int      @default(15)
+  updatedBy             String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@map("anti_raid_configs")
+}
+
+model BeastModeState {
+  guildId           String    @id
+  enabled           Boolean   @default(true)
+  active            Boolean   @default(false)
+  score             Int       @default(0)
+  threshold         Int       @default(100)
+  durationMinutes   Int       @default(60)
+  emergencyLockdown Boolean   @default(false)
+  activatedAt       DateTime?
+  expiresAt         DateTime?
+  incidentId        String?
+  activatedBy       String?
+  activationReason  String?
+  deactivatedAt     DateTime?
+  overrideBy        String?
+  overrideReason    String?
+  overriddenAt      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@map("beast_mode_states")
+}
+
+enum QuarantineStatus {
+  ACTIVE
+  RELEASED
+  EXPIRED
+}
+
+model QuarantineEntry {
+  id                   String           @id @default(cuid())
+  guildId              String
+  userId               String
+  incidentId           String?
+  roleId               String
+  status               QuarantineStatus @default(ACTIVE)
+  reason               String
+  requiresVerification Boolean          @default(true)
+  appliedAt            DateTime         @default(now())
+  releasedAt           DateTime?
+  releasedBy           String?
+  releaseReason        String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  guild    Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  incident SecurityIncident? @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+
+  @@index([guildId, status, appliedAt])
+  @@index([guildId, userId, status])
+  @@map("quarantine_entries")
+}
+
+model AutomodConfig {
+  guildId                String   @id
+  enabled                Boolean  @default(false)
+  floodMessages          Int      @default(8)
+  floodWindowSeconds     Int      @default(10)
+  duplicateWindowSeconds Int      @default(60)
+  duplicateThreshold     Int      @default(3)
+  mentionLimit           Int      @default(6)
+  capsPercentage         Int      @default(70)
+  capsMinimumLength      Int      @default(20)
+  inviteLinksBlocked     Boolean  @default(true)
+  linkFilterEnabled      Boolean  @default(true)
+  bannedWords            String[] @default([])
+  blockedDomains         String[] @default([])
+  exemptChannelIds       String[] @default([])
+  exemptRoleIds          String[] @default([])
+  exemptUserIds          String[] @default([])
+  ignoreStaff            Boolean  @default(true)
+  warnEnabled            Boolean  @default(true)
+  timeoutEnabled         Boolean  @default(true)
+  timeoutAfterWarnings   Int      @default(3)
+  deleteOffendingMessage Boolean  @default(true)
+  highConfidenceRules    String[] @default([])
+  timeoutSeconds         Int      @default(600)
+  updatedBy              String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@map("automod_configs")
+}
+
+model VerificationConfig {
+  guildId                 String           @id
+  enabled                 Boolean          @default(false)
+  mode                    VerificationMode @default(BUTTON)
+  buttonFallbackEnabled   Boolean          @default(false)
+  unverifiedRoleId        String?
+  verifiedRoleId          String?
+  channelId               String?
+  challengeLength         Int              @default(6)
+  timeoutSeconds          Int              @default(300)
+  maxAttempts             Int              @default(3)
+  captchaNoise            Int              @default(3)
+  releaseQuarantineOnPass Boolean          @default(true)
+  updatedBy               String?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@map("verification_configs")
+}
+
+model LogChannel {
+  id        String      @id @default(cuid())
+  guildId   String
+  category  LogCategory
+  channelId String
+  enabled   Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, category])
+  @@map("log_channels")
+}
+
+// ── Trust and access ─────────────────────────────────────────────────────────
+
+model WhitelistEntry {
+  id         String              @id @default(cuid())
+  guildId    String
+  targetType WhitelistTargetType
+  targetId   String
+  scope      WhitelistScope      @default(GLOBAL)
+  action     AntiNukeAction?
+  reason     String
+  createdBy  String
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  revokedBy  String?
+  createdAt  DateTime            @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, targetType, targetId])
+  @@index([guildId, scope, action])
+  @@index([guildId, expiresAt])
+  @@map("whitelist_entries")
+}
+
+model AccessGrant {
+  id             String           @id @default(cuid())
+  guildId        String
+  subjectType    GrantSubjectType
+  subjectId      String
+  permissionKeys String[]         @default([])
+  grantedBy      String
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  revokedBy      String?
+  createdAt      DateTime         @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, subjectType, subjectId])
+  @@index([guildId, revokedAt])
+  @@map("access_grants")
+}
+
+model BotApproval {
+  id         String    @id @default(cuid())
+  guildId    String
+  botId      String
+  approvedBy String
+  reason     String
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, botId])
+  @@map("bot_approvals")
+}
+
+// ── Security history ─────────────────────────────────────────────────────────
+
+model SecurityIncident {
+  id             String           @id @default(cuid())
+  guildId        String
+  type           IncidentType
+  severity       IncidentSeverity @default(MEDIUM)
+  status         IncidentStatus   @default(OPEN)
+  score          Int              @default(0)
+  actorId        String?
+  actorSummary   String?
+  openedAt       DateTime         @default(now())
+  closedAt       DateTime?
+  overrideBy     String?
+  overrideReason String?
+  metadata       Json?
+
+  guild             Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  events            SecurityEvent[]
+  punishments       Punishment[]
+  quarantineEntries QuarantineEntry[]
+
+  @@index([guildId, status, openedAt])
+  @@index([guildId, type, openedAt])
+  @@map("security_incidents")
+}
+
+model SecurityEvent {
+  id              String              @id @default(cuid())
+  guildId         String
+  source          SecurityEventSource
+  externalEventId String
+  action          String
+  actorId         String?
+  targetId        String?
+  riskScore       Int                 @default(0)
+  incidentId      String?
+  payload         Json?
+  occurredAt      DateTime            @default(now())
+  createdAt       DateTime            @default(now())
+
+  guild    Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  incident SecurityIncident? @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+
+  @@unique([guildId, source, externalEventId])
+  @@index([guildId, occurredAt])
+  @@index([guildId, actorId, occurredAt])
+  @@index([guildId, incidentId])
+  @@map("security_events")
+}
+
+model Punishment {
+  id             String           @id @default(cuid())
+  guildId        String
+  incidentId     String?
+  caseId         String?
+  actorId        String
+  type           PunishmentType
+  status         PunishmentStatus @default(PROPOSED)
+  idempotencyKey String
+  reason         String
+  appliedAt      DateTime?
+  failedReason   String?
+  reversedAt     DateTime?
+  reversedBy     String?
+  createdAt      DateTime         @default(now())
+
+  guild    Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  incident SecurityIncident? @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+
+  @@unique([guildId, idempotencyKey])
+  @@index([guildId, status, createdAt])
+  @@index([guildId, incidentId])
+  @@map("punishments")
+}
+
+model ModerationCase {
+  id              String               @id @default(cuid())
+  guildId         String
+  number          Int
+  type            ModerationCaseType
+  targetId        String
+  moderatorId     String
+  reason          String
+  durationSeconds Int?
+  status          ModerationCaseStatus @default(OPEN)
+  expiresAt       DateTime?
+  closedAt        DateTime?
+  source          String               @default("discord")
+  metadata        Json?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  guild    Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  warnings Warning[]
+
+  @@unique([guildId, number])
+  @@index([guildId, targetId, createdAt])
+  @@index([guildId, moderatorId, createdAt])
+  @@index([guildId, status])
+  @@map("moderation_cases")
+}
+
+model Warning {
+  id          String    @id @default(cuid())
+  guildId     String
+  caseId      String?
+  targetId    String
+  moderatorId String
+  reason      String
+  active      Boolean   @default(true)
+  revokedAt   DateTime?
+  revokedBy   String?
+  createdAt   DateTime  @default(now())
+
+  guild Guild           @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  case  ModerationCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  @@index([guildId, targetId, active])
+  @@index([guildId, createdAt])
+  @@map("warnings")
+}
+
+model AuditEntry {
+  id             String         @id @default(cuid())
+  guildId        String
+  actorType      AuditActorType
+  actorId        String?
+  action         String
+  targetType     String?
+  targetId       String?
+  before         Json?
+  after          Json?
+  diff           Json?
+  requestId      String?
+  ipHash         String?
+  userAgent      String?
+  confirmationId String?
+  createdAt      DateTime       @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Restrict)
+
+  @@index([guildId, createdAt])
+  @@index([guildId, action, createdAt])
+  @@index([guildId, actorId, createdAt])
+  @@map("audit_entries")
+}
+
+model CriticalApproval {
+  id          String                 @id @default(cuid())
+  guildId     String
+  requestedBy String
+  action      String
+  digest      String
+  status      CriticalApprovalStatus @default(PENDING)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  consumedBy  String?
+  metadata    Json?
+  createdAt   DateTime               @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, status, expiresAt])
+  @@index([guildId, action])
+  @@map("critical_approvals")
+}
+
+// ── Verification and backups ─────────────────────────────────────────────────
+
+model VerificationChallenge {
+  id            String                      @id @default(cuid())
+  guildId       String
+  userId        String
+  mode          VerificationMode
+  answerHash    String
+  attempts      Int                         @default(0)
+  maxAttempts   Int                         @default(3)
+  status        VerificationChallengeStatus @default(PENDING)
+  channelId     String?
+  messageId     String?
+  failureReason String?
+  expiresAt     DateTime
+  createdAt     DateTime                    @default(now())
+  lastAttemptAt DateTime?
+  completedAt   DateTime?
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, userId, status])
+  @@index([guildId, expiresAt, status])
+  @@map("verification_challenges")
+}
+
+model Backup {
+  id             String       @id @default(cuid())
+  guildId        String
+  type           BackupType
+  status         BackupStatus @default(PENDING)
+  schemaVersion  Int          @default(1)
+  checksum       String?
+  objectKey      String?
+  sizeBytes      BigInt?
+  createdBy      String
+  retentionUntil DateTime?
+  error          String?
+  createdAt      DateTime     @default(now())
+  completedAt    DateTime?
+
+  guild       Guild        @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  restoreJobs RestoreJob[]
+
+  @@index([guildId, createdAt])
+  @@index([guildId, status])
+  @@map("backups")
+}
+
+model RestoreJob {
+  id             String        @id @default(cuid())
+  guildId        String
+  backupId       String
+  status         RestoreStatus @default(PENDING)
+  selection      Json?
+  progress       Int           @default(0)
+  errors         Json?
+  confirmationId String?
+  requestedBy    String
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime      @default(now())
+
+  guild  Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  backup Backup @relation(fields: [backupId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
+  @@index([guildId, status])
+  @@map("restore_jobs")
+}
+
+// ── Dashboard identity (no Discord token is ever stored in plain text) ───────
+
+model OAuthIdentity {
+  id            String   @id @default(cuid())
+  discordUserId String   @unique
+  username      String
+  globalName    String?
+  avatarHash    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  credential OAuthCredential?
+  sessions   DashboardSession[]
+
+  @@map("oauth_identities")
+}
+
+model OAuthCredential {
+  id                     String   @id
+  identityId             String   @unique
+  accessTokenCiphertext  String
+  refreshTokenCiphertext String
+  iv                     String
+  authTag                String
+  refreshIv              String   @default("")
+  refreshAuthTag         String   @default("")
+  scopes                 String[] @default([])
+  expiresAt              DateTime
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  identity OAuthIdentity @relation(fields: [identityId], references: [id], onDelete: Cascade)
+
+  @@map("oauth_credentials")
+}
+
+model DashboardSession {
+  id          String    @id @default(cuid())
+  identityId  String
+  sessionHash String    @unique
+  csrfHash    String
+  guildIds    String[]  @default([])
+  createdAt   DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+
+  identity OAuthIdentity @relation(fields: [identityId], references: [id], onDelete: Cascade)
+
+  @@index([identityId])
+  @@index([expiresAt])
+  @@map("dashboard_sessions")
+}
+
+enum DashboardActionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+/// Dashboard-triggered Discord work. The API never talks to Discord; the bot
+/// claims and executes these rows, then records the result.
+model DashboardAction {
+  id             String                @id @default(cuid())
+  guildId        String
+  actorId        String
+  type           String
+  payload        Json?
+  result         Json?
+  error          String?
+  status         DashboardActionStatus @default(PENDING)
+  confirmationId String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  startedAt      DateTime?
+  completedAt    DateTime?
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, status, createdAt])
+  @@index([status, createdAt])
+  @@map("dashboard_actions")
+}

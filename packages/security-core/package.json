@@ -1,0 +1,25 @@
+{
+  "name": "@t77/security-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure T77 security decision engines (no Discord.js, Prisma, or network access)",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@vitest/coverage-v8": "^5.1.0",
+    "typescript": "5.9.3",
+    "vitest": "^5.1.0"
+  }
+}
