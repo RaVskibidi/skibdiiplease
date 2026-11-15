@@ -12,10 +12,12 @@ export default defineConfig({
   minify: false,
   splitting: false,
   noExternal: [/^@t77\//],
-  external: [
-    'pg',
-    'pg-native',
-    '@prisma/client',
-    '@prisma/client/runtime/*',
-  ],
+external: [
+  'pg',
+  'pg-native',
+  'ioredis',
+  '@prisma/client',
+  '@prisma/client/runtime/*',
+  '@prisma/adapter-pg',
+],
 });
